@@ -1,0 +1,111 @@
+{
+  "AWSTemplateFormatVersion": "2010-09-09",
+  "Description": " i am going create vpc",
+   
+   "Parameters":{
+   },
+
+
+   "Resources":{
+
+    
+    "myvpc": {
+      "Type": "AWS::EC2::VPC",
+      "Properties": {
+        "CidrBlock": "10.10.0.0/16"
+      }
+    },
+
+   
+   "myIGW": {
+     "Type": "AWS::EC2::InternetGateway"
+   },
+   "AttachGateway": {
+     "Type": "AWS::EC2::VPCGatewayAttachment",
+     "Properties": {
+       "VpcId": 
+       { "Ref": "myvpc" }
+       ,
+       "InternetGatewayId": { "Ref": "myIGW" }
+     }
+   },
+   
+     "PublicSubnet": {
+     "Type": "AWS::EC2::Subnet",
+     "Properties": {
+       "AvailabilityZone": "us-east-1a",
+       "VpcId": 
+       { "Ref": "myvpc" }
+       ,
+       "CidrBlock": "10.10.1.0/24"
+     }
+   },
+   
+   "PublicRT": {
+     "Type": "AWS::EC2::RouteTable",
+     "Properties": {
+       "VpcId": 
+       { "Ref": "myvpc" }
+      
+     }
+   },
+
+   
+   "PublicrouteTableAssoc": {
+     "Type": "AWS::EC2::SubnetRouteTableAssociation",
+     "Properties": {
+       "SubnetId": 
+       { "Ref": "PublicSubnet" }
+       ,
+       "RouteTableId": 
+       { "Ref": "PublicRT" }
+       
+     }
+   },
+
+
+   
+   "publicroute": {
+     "Type": "AWS::EC2::Route",
+     "Properties": {
+       "RouteTableId": 
+       { "Ref": "PublicRT" }
+       ,
+       "DestinationCidrBlock": "0.0.0.0/0",
+       "GatewayId": 
+       { "Ref": "myIGW" }
+       
+     }
+   }
+   
+   
+   
+     
+    
+
+   },
+
+   "Outputs": {
+
+   
+   "myvpcoutput" : {
+     "Value" : 
+     { "Ref": "myvpc" }
+     
+   },
+
+   
+   "myigw" : {
+     "Value" : 
+     { "Ref": "myIGW" }
+     
+   }
+   
+   
+
+
+   }
+
+
+
+}
