@@ -3,6 +3,42 @@
   "Description": " i am going create vpc",
    
    "Parameters":{
+    
+    "publicAZ": {
+        "Description": "-",
+        "Type": "AWS::EC2::AvailabilityZone::Name",
+        "Default": "us-east-1a"
+    },
+
+    
+    "privateAZ": {
+        "Description": "privateAZ",
+        "Type": "AWS::EC2::AvailabilityZone::Name"
+    },
+    
+    
+    "mykeyname": {
+        "Description": "mykeyname",
+        "Type": "AWS::EC2::KeyPair::KeyName"
+    },
+
+    
+    "myimage": {
+        "Description": "myimage",
+        "Type": "AWS::EC2::Image::Id",
+        "Default": "ami-04763b3055de4860b"
+    },
+
+    
+    "myinstype": {
+        "Description": "myinstype",
+        "Type": "String",
+        "Default": "t2.micro"
+    }
+    
+    
+    
+    
    },
 
 
@@ -33,7 +69,9 @@
      "PublicSubnet": {
      "Type": "AWS::EC2::Subnet",
      "Properties": {
-       "AvailabilityZone": "us-east-1a",
+       "AvailabilityZone": 
+       { "Ref": "publicAZ" }
+       ,
        "VpcId": 
        { "Ref": "myvpc" }
        ,
@@ -76,7 +114,150 @@
        { "Ref": "myIGW" }
        
      }
+   },
+
+   
+   "privatesubnet": {
+     "Type": "AWS::EC2::Subnet",
+     "Properties": {
+       "AvailabilityZone": 
+       { "Ref": "privateAZ" }
+       ,
+       "VpcId": 
+       { "Ref": "myvpc" }
+       ,
+       "CidrBlock": "10.10.2.0/24"
+     }
+   },
+
+   
+   "privateRT": {
+     "Type": "AWS::EC2::RouteTable",
+     "Properties": {
+       "VpcId": 
+       { "Ref": "myvpc" }
+      
+     }
+   },
+
+   
+   "privaterouteTableAssoc": {
+     "Type": "AWS::EC2::SubnetRouteTableAssociation",
+     "Properties": {
+       "SubnetId": 
+       { "Ref": "privatesubnet" }
+       ,
+       "RouteTableId": 
+       { "Ref": "privateRT" }
+       
+     }
+   },
+
+
+   "myEIP" : {
+        "Type" : "AWS::EC2::EIP"
+   },
+
+   "myNAT" : {
+    "Type" : "AWS::EC2::NatGateway",
+    "Properties" : {
+       "AllocationId" : { "Fn::GetAtt" : ["myEIP", "AllocationId"]},
+       "SubnetId" : { "Ref" : "PublicSubnet"}
+      }
+  },
+   
+   "privateroute": {
+     "Type": "AWS::EC2::Route",
+     "Properties": {
+       "RouteTableId": 
+       { "Ref": "privateRT" }
+       ,
+       "DestinationCidrBlock": "0.0.0.0/0",
+       "NatGatewayId" : { "Ref" : "myNAT" }
+     }
+   },
+
+
+   
+   "mysecG" : {
+     "Type" : "AWS::EC2::SecurityGroup",
+     "Properties" : {
+       "GroupDescription" : "mysecG",
+       "SecurityGroupIngress" : [ 
+        { "IpProtocol" : "tcp", "FromPort" : "22", "ToPort" : "22", "CidrIp" : "0.0.0.0/0" },
+        { "IpProtocol" : "tcp", "FromPort" : "80", "ToPort" : "80", "CidrIp" : "0.0.0.0/0" }
+
+       ],
+       "VpcId" : 
+       { "Ref": "myvpc" }
+     
+     }
+   },
+   
+  
+   "publicins": {
+       "Type": "AWS::EC2::Instance",
+       "Properties": {
+           "KeyName": 
+           { "Ref": "mykeyname" }
+           ,
+           "ImageId":
+           { "Ref": "myimage" }
+           ,
+           "InstanceType": 
+           { "Ref": "myinstype" }
+           ,
+           "NetworkInterfaces": [ {
+            "AssociatePublicIpAddress": "true",
+            "DeviceIndex": "0",
+            "GroupSet": [{ "Ref" : "mysecG" }],
+            "SubnetId": { "Ref" : "PublicSubnet" }
+          } ]
+           ,
+           
+           "Tags": [
+               {
+                   "Key": "name",
+                   "Value": "publicins"
+               }
+           ]
    }
+           },
+
+
+           
+           "privateins": {
+               "Type": "AWS::EC2::Instance",
+               "Properties": {
+                   "KeyName": 
+                   { "Ref": "mykeyname" }
+                   ,
+                   "ImageId":
+                   { "Ref": "myimage" }
+                   ,
+                   "InstanceType": 
+                   { "Ref": "myinstype" }
+                   ,
+                  "SecurityGroupIds" : [
+                  { "Ref": "mysecG" }
+                  ],
+                  "SubnetId":
+                  { "Ref": "privatesubnet" },
+                  
+                   "Tags": [
+                       {
+                           "Key": "name",
+                           "Value": "privateins"
+                       }
+                   ]          }
+                   }
+   
+   
+   
+   
+
+
+
    
    
    
